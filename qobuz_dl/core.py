@@ -69,13 +69,14 @@ class QobuzDL:
         self.track_format = track_format
         self.smart_discography = smart_discography
 
-    def initialize_client(self, email, pwd, app_id, secrets):
-        self.client = qopy.Client(email, pwd, app_id, secrets)
+    def initialize_client(self, user_auth_token, app_id, secrets):
+        self.client = qopy.Client(user_auth_token, app_id, secrets)
         logger.info(f"{YELLOW}Set max quality: {QUALITIES[int(self.quality)]}\n")
 
     def get_tokens(self):
         bundle = Bundle()
         self.app_id = bundle.get_app_id()
+        self.private_key = bundle.get_private_key()
         self.secrets = [
             secret for secret in bundle.get_secrets().values() if secret
         ]  # avoid empty fields

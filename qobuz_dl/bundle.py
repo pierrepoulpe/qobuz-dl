@@ -16,6 +16,7 @@ _INFO_EXTRAS_REGEX = r'name:"\w+/(?P<timezone>{timezones})",info:"(?P<info>[\w=]
 _APP_ID_REGEX = re.compile(
     r'production:{api:{appId:"(?P<app_id>\d{9})",appSecret:"\w{32}"'
 )
+_PRIVATE_KEY_REGEX = re.compile(r'\.authenticate\({privateKey:"(?P<private_key>\w+)"')
 
 _BUNDLE_URL_REGEX = re.compile(
     r'<script src="(/resources/\d+\.\d+\.\d+-[a-z]\d{3}/bundle\.js)"></script>'
@@ -53,6 +54,13 @@ class Bundle:
             raise NotImplementedError("Failed to match APP ID")
 
         return match.group("app_id")
+
+    def get_private_key(self):
+        match = _PRIVATE_KEY_REGEX.search(self._bundle)
+        if not match:
+            raise NotImplementedError("Failed to match private key")
+
+        return match.group("private_key")
 
     def get_secrets(self):
         logger.debug("Getting secrets")

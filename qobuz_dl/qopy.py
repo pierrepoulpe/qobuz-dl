@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class Client:
-    def __init__(self, email, pwd, app_id, secrets):
+    def __init__(self, user_auth_token, app_id, secrets):
         logger.info(f"{YELLOW}Logging...")
         self.secrets = secrets
         self.id = str(app_id)
@@ -38,17 +38,11 @@ class Client:
         )
         self.base = "https://www.qobuz.com/api.json/0.2/"
         self.sec = None
-        self.auth(email, pwd)
+        self.auth(user_auth_token)
         self.cfg_setup()
 
     def api_call(self, epoint, **kwargs):
-        if epoint == "user/login":
-            params = {
-                "email": kwargs["email"],
-                "password": kwargs["pwd"],
-                "app_id": self.id,
-            }
-        elif epoint == "track/get":
+        if epoint == "track/get":
             params = {"track_id": kwargs["id"]}
         elif epoint == "album/get":
             params = {"album_id": kwargs["id"]}
@@ -106,9 +100,9 @@ class Client:
         else:
             params = kwargs
         r = self.session.get(self.base + epoint, params=params)
-        if epoint == "user/login":
+        if epoint == "user/get":
             if r.status_code == 401:
-                raise AuthenticationError("Invalid credentials.\n" + RESET)
+                raise AuthenticationError("Invalid or expired token.\n" + RESET)
             elif r.status_code == 400:
                 raise InvalidAppIdError("Invalid app id.\n" + RESET)
             else:
@@ -122,13 +116,13 @@ class Client:
         r.raise_for_status()
         return r.json()
 
-    def auth(self, email, pwd):
-        usr_info = self.api_call("user/login", email=email, pwd=pwd)
-        if not usr_info["user"]["credential"]["parameters"]:
-            raise IneligibleError("Free accounts are not eligible to download tracks.")
-        self.uat = usr_info["user_auth_token"]
+    def auth(self, user_auth_token):
+        self.uat = user_auth_token
         self.session.headers.update({"X-User-Auth-Token": self.uat})
-        self.label = usr_info["user"]["credential"]["parameters"]["short_label"]
+        usr_info = self.api_call("user/get")
+        if not usr_info["credential"]["parameters"]:
+            raise IneligibleError("Free accounts are not eligible to download tracks.")
+        self.label = usr_info["credential"]["parameters"]["short_label"]
         logger.info(f"{GREEN}Membership: {self.label}")
 
     def multi_meta(self, epoint, key, id, type):

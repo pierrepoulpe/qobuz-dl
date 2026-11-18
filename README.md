@@ -30,7 +30,7 @@ pip3 install --upgrade qobuz-dl
 pip3 install windows-curses
 pip3 install --upgrade qobuz-dl
 ```
-#### Run qobuz-dl and enter your credentials
+#### Run qobuz-dl and log in
 ##### Linux / MAC OS
 ```
 qobuz-dl
@@ -39,6 +39,8 @@ qobuz-dl
 ```
 qobuz-dl.exe
 ```
+
+Qobuz no longer accepts logging in with an email and password from third-party tools. qobuz-dl opens the Qobuz sign-in page in your browser instead; once you are logged in, the token is saved in your config file. When the token expires, the browser opens again on the next run.
 
 > If something fails, run `qobuz-dl -r` to reset your config file.
 
@@ -155,15 +157,14 @@ Using `qobuz-dl` as a module is really easy. Basically, the only thing you need 
 ```python
 import logging
 from qobuz_dl.core import QobuzDL
+from qobuz_dl.oauth import get_user_auth_token
 
 logging.basicConfig(level=logging.INFO)
 
-email = "your@email.com"
-password = "your_password"
-
 qobuz = QobuzDL()
-qobuz.get_tokens() # get 'app_id' and 'secrets' attrs
-qobuz.initialize_client(email, password, qobuz.app_id, qobuz.secrets)
+qobuz.get_tokens() # get 'app_id', 'secrets' and 'private_key' attrs
+user_auth_token = get_user_auth_token(qobuz.app_id, qobuz.private_key) # log in through the browser
+qobuz.initialize_client(user_auth_token, qobuz.app_id, qobuz.secrets)
 
 qobuz.handle_url("https://play.qobuz.com/album/va4j3hdlwaubc")
 ```
